@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>FilterGridRefactored</title>
+
+    <script type="text/javascript" src="/apps/2.0/sdk.js"></script>
+
+    <script type="text/javascript">
+        Rally.onReady(function () {
+                Ext.define("CustomApp",{extend:"Rally.app.App",componentCls:"app",launch:function(){console.log("Our second Rally app"),this.pulldownContainer=Ext.create("Ext.container.Container",{id:"pulldown-container-id",layout:{type:"hbox",align:"stretch"}}),this.add(this.pulldownContainer),this._loadIterations()},_loadIterations:function(){this.iterComboBox=Ext.create("Rally.ui.combobox.IterationComboBox",{fieldLabel:"Iteration",labelAlign:"right",width:450,listeners:{scope:this,ready:function(combobox){this._loadSeverities()},select:function(combobox,records){this._loadData()}}}),this.pulldownContainer.add(this.iterComboBox)},_loadSeverities:function(){this.sevComboBox=Ext.create("Rally.ui.combobox.FieldValueComboBox",{model:"Defect",field:"Severity",fieldLabel:"Severity",labelAlign:"right",listeners:{scope:this,ready:function(combobox){this._loadData()},select:function(combobox,records){this._loadData()}}}),this.pulldownContainer.add(this.sevComboBox)},_loadData:function(){var selectedIterRef=this.iterComboBox.getRecord().get("_ref"),selectedSevValue=this.sevComboBox.getRecord().get("value");console.log("selected iteration",selectedIterRef),console.log("selected severity",selectedSevValue);var myFilters=[{property:"Iteration",operator:"=",value:selectedIterRef},{property:"Severity",operator:"=",value:selectedSevValue}];this.defectStore?(console.log("store exists"),this.defectStore.setFilter(myFilters),this.defectStore.load()):(console.log("creating store"),this.defectStore=Ext.create("Rally.data.wsapi.Store",{model:"Defect",autoLoad:!0,filters:myFilters,listeners:{load:function(myStore,myData,success){this.myGrid||this._creategrid(myStore)},scope:this},fetch:["FormattedID","Name","Severity","Iteration"]}))},_creategrid:function(myStoryStore){this.myGrid=Ext.create("Rally.ui.grid.Grid",{store:myStoryStore,columnCfgs:["FormattedID","Name","Severity","Iteration"]}),this.add(this.myGrid)}});
+
+            Rally.launchApp('CustomApp', {
+                name:"FilterGridRefactored",
+	            parentRepos:""
+            });
+
+        });
+    </script>
+
+
+    <style type="text/css">
+        
+    </style>
+</head>
+<body>
+</body>
+</html>
