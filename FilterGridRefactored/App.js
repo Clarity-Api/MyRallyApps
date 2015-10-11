@@ -1,85 +1,89 @@
 Ext.define('CustomApp', {
     extend: 'Rally.app.App',
     componentCls: 'app',
+
+	items: [
+		{
+			xtype: 'container',
+			itemId: 'pulldown-container',
+			layout: {
+				type: 'hbox',
+				align: 'stretch'
+			}
+		}
+	],
+	defectStore: undefined,
+	defectGrid: undefined,
     
 	launch: function() {
 		console.log('Our second Rally app');
 		//this._loadData();
-		this.pulldownContainer = Ext.create('Ext.container.Container', {
-			id: 'pulldown-container-id',
-			layout: {
-			type: 'hbox',
-			align: 'stretch'
-			}
-		});
+		var pulldownContainer = {
+			
+		};
 		
-		this.add(this.pulldownContainer);
-
 		this._loadIterations();
 	},
 	
 	_loadIterations: function() {
-		this.iterComboBox = Ext.create('Rally.ui.combobox.IterationComboBox', {
+		var iterComboBox = Ext.create('Rally.ui.combobox.IterationComboBox', {
+		itemId: 'iteration-combobox',
 		fieldLabel: 'Iteration',
 		labelAlign: 'right',
 		width: 450,
 		listeners: {
-			scope: this,
-			ready: function(combobox) {
-				// console.log('ready', combobox);
-				this._loadSeverities();
-			},
-			select: function(combobox, records) {
-				// console.log('select', this, combobox, records);
-				this._loadData();
-			}
+			ready: this._loadSeverities,
+			select: this._loadData,
+			scope: this
 		}
 		});
-		this.pulldownContainer.add(this.iterComboBox);
+		//this.pulldownContainer.add(this.iterComboBox);
+		this.down('#pulldown-container').add(iterComboBox);
 	},
 	
 	_loadSeverities: function() {
-		this.sevComboBox = Ext.create('Rally.ui.combobox.FieldValueComboBox', {
+		var sevComboBox = Ext.create('Rally.ui.combobox.FieldValueComboBox', {
+		itemId: 'severity-combobox',
 		model: 'Defect',
 		field: 'Severity',			
 		fieldLabel: 'Severity',
 		labelAlign: 'right',
 		listeners: {
 			scope: this,
-			ready: function(combobox) {
-				// console.log('ready', combobox);
-				this._loadData();
-			},
-			select: function(combobox, records) {
-				// console.log('select', this, combobox, records);
-				this._loadData();
-			}
+			ready: this._loadData,
+			select: this._loadData
 		}
 		});
-		this.pulldownContainer.add(this.sevComboBox);
+		//this.pulldownContainer.add(this.sevComboBox);
+		this.down('#pulldown-container').add(sevComboBox);
 
+	},
+	
+	_getFilters: function(iterationRef, severityValue) {
+		
+		var iterationFilter = Ext.create('Rally.data.wsapi.Filter', {
+            property: 'Iteration',
+			operator: '=',
+            value: iterationRef
+        });
+		
+		var severityFilter = Ext.create('Rally.data.wsapi.Filter', {
+            property: 'Severity',
+			operator: '=',
+            value: severityValue
+        });
+		
+		return iterationFilter.and(severityFilter);
+		
 	},
 	
 	_loadData: function() {
 		
-		var selectedIterRef = this.iterComboBox.getRecord().get('_ref');
-		var selectedSevValue = this.sevComboBox.getRecord().get('value');
+		var selectedIterRef = this.down('#iteration-combobox').getRecord().get('_ref');
+		var selectedSevValue = this.down('#severity-combobox').getRecord().get('value');
 
-		console.log('selected iteration', selectedIterRef);
-		console.log('selected severity', selectedSevValue);
-
-		var myFilters = [
-        {
-            property: 'Iteration',
-			operator: '=',
-            value: selectedIterRef
-        },
-		{
-            property: 'Severity',
-			operator: '=',
-            value: selectedSevValue
-        }
-		];
+		var myFilters = this._getFilters(selectedIterRef, selectedSevValue);
+		console.log('myFilters', myFilters.toString());
 		
 		if (this.defectStore) {
 			console.log('store exists');
@@ -95,7 +99,7 @@ Ext.define('CustomApp', {
 			listeners: {
 				load: function(myStore, myData, success) {
 				// console.log('got data', myStore, myData, success);
-					if (!this.myGrid) {
+					if (!this.defectGrid) {
 					this._creategrid(myStore);
 				}
 			},
@@ -108,13 +112,13 @@ Ext.define('CustomApp', {
 	
 	_creategrid: function(myStoryStore) {
 	
-		this.myGrid = Ext.create('Rally.ui.grid.Grid', {
+		this.defectGrid = Ext.create('Rally.ui.grid.Grid', {
 		store: myStoryStore,
 		columnCfgs: ['FormattedID', 'Name', 'Severity', 'Iteration']
 		});
 		
-		// console.log('myGrid', myGrid);
-		this.add(this.myGrid);
+		// console.log('defectGrid', defectGrid);
+		this.add(this.defectGrid);
 		// console.log('what is this?', this);
 	}		
 });
